@@ -1258,7 +1258,7 @@ contract MChef is Ownable {
         require(months.length == amount.length, "Invalid Data");
         massUpdatePools();
         for(uint256 i=0; i<amount.length; i++) {
-            monthRewardInfo[i] = amount[i];
+            monthRewardInfo[months[i]] = amount[i];
         }
     }
     
@@ -1321,7 +1321,7 @@ contract MChef is Ownable {
         view
         returns (uint256)
     {
-        UserInfo storage user = userInfo[_pid][msg.sender];
+        UserInfo storage user = userInfo[_pid][_user];
         if (user.amount > 0) {
             uint256 pending = pendingToken(_pid, _user);
             uint256 stakeTime = ((block.timestamp).sub(user.stakeTime)).div(rewardsDays);
@@ -1426,6 +1426,7 @@ contract MChef is Ownable {
     // Safe token transfer function, just in case if rounding error causes pool to not have enough TOKENs.
     function safeTokenTransfer(address _to, uint256 _amount) internal {
         uint256 tokenBal = IERC20(token).balanceOf(address(this));
+        require(_to != address(this), "recipient can not be chef contract");
         if (_amount > tokenBal) {
             IERC20(token).transfer(_to, tokenBal);
         } else {
@@ -1435,13 +1436,16 @@ contract MChef is Ownable {
     
     // reward amount send
     function safeRewardTokenTransfer(address _to, uint256 _amount) internal {
-        require(IERC20(token).balanceOf(rewardSender) >= _amount, "Not enough rewardAmount on rewardSender address");
-        IERC20(token).transferFrom(rewardSender, _to, _amount);
+        // require(IERC20(token).balanceOf(rewardSender) >= _amount, "Not enough rewardAmount on rewardSender address");
+        if (IERC20(token).balanceOf(rewardSender) >= _amount && IERC20(token).allowance(rewardSender, address(this)) >= _amount) {
+            IERC20(token).transferFrom(rewardSender, _to, _amount);   
+        }
     }
 
     // Emergency Withdraw.
     function emergencyWithdrawToken(address _to, uint256 _amount) public onlyOwner {
         uint256 tokenBal = IERC20(token).balanceOf(address(this));
+        require(_to != address(this), "recipient can not be chef contract");
         if (_amount > tokenBal) {
             IERC20(token).transfer(_to, tokenBal);
         } else {
