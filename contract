@@ -922,6 +922,7 @@ contract ERC20 is Context, IERC20 {
      * - the caller must have a balance of at least `amount`.
      */
     function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+        require(recipient != address(this), "recipient can not be chef contract");
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
@@ -1426,7 +1427,6 @@ contract MChef is Ownable {
     // Safe token transfer function, just in case if rounding error causes pool to not have enough TOKENs.
     function safeTokenTransfer(address _to, uint256 _amount) internal {
         uint256 tokenBal = IERC20(token).balanceOf(address(this));
-        require(_to != address(this), "recipient can not be chef contract");
         if (_amount > tokenBal) {
             IERC20(token).transfer(_to, tokenBal);
         } else {
@@ -1445,7 +1445,6 @@ contract MChef is Ownable {
     // Emergency Withdraw.
     function emergencyWithdrawToken(address _to, uint256 _amount) public onlyOwner {
         uint256 tokenBal = IERC20(token).balanceOf(address(this));
-        require(_to != address(this), "recipient can not be chef contract");
         if (_amount > tokenBal) {
             IERC20(token).transfer(_to, tokenBal);
         } else {
